@@ -10,6 +10,8 @@ from typing import List, Optional
 import uuid
 from datetime import datetime, timezone, timedelta
 import random
+import json
+import ast
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -44,145 +46,77 @@ class Transaction(BaseModel):
 
 # Seed dummy data
 async def seed_transactions():
-    count = await db.transactions.count_documents({})
-    if count > 0:
+    dummy_file_path = ROOT_DIR / 'dummy.txt'
+    if not dummy_file_path.exists():
+        print(f"Dummy data file not found at {dummy_file_path}")
         return
-    
-    categories = {
-        "Food & Dining": ["Restaurant", "Groceries", "Fast Food", "Cafe"],
-        "Transportation": ["Fuel", "Public Transport", "Taxi", "Parking"],
-        "Shopping": ["Clothing", "Electronics", "Books", "Home Goods"],
-        "Healthcare": ["Doctor", "Pharmacy", "Insurance", "Lab Tests"],
-        "Entertainment": ["Movies", "Streaming", "Sports", "Events"],
-        "Utilities": ["Electricity", "Water", "Internet", "Phone"],
-        "Education": ["Tuition", "Books", "Courses", "Supplies"],
-        "Investment": ["Mutual Funds", "Stocks", "PPF", "Insurance"],
-        "Rent": ["House Rent", "Office Rent"],
-        "Salary": ["Monthly Salary", "Bonus", "Freelance"]
-    }
-    
-    merchants = {
-        "Food & Dining": ["Zomato", "Swiggy", "McDonald's", "Starbucks", "BigBasket"],
-        "Transportation": ["Shell", "HP Petrol", "Uber", "Ola", "Metro Card"],
-        "Shopping": ["Amazon", "Flipkart", "H&M", "Reliance Digital", "Crossword"],
-        "Healthcare": ["Apollo Pharmacy", "Max Hospital", "LIC", "Dr. Reddy's Lab"],
-        "Entertainment": ["PVR Cinemas", "Netflix", "Amazon Prime", "BookMyShow"],
-        "Utilities": ["BSES", "Jio", "Airtel", "Hathway"],
-        "Education": ["Udemy", "Coursera", "Oxford Bookstore", "IIT Delhi"],
-        "Investment": ["Zerodha", "SBI Mutual Fund", "LIC Premium", "PPF Account"],
-        "Rent": ["Property Owner", "Co-working Space"],
-        "Salary": ["TechCorp Inc", "Freelance Client", "Year-end Bonus"]
-    }
-    
-    tax_mapping = {
-        "Investment": ["80C"],
-        "Healthcare": ["80D"],
-        "Rent": ["HRA"],
-        "Education": ["80C"]
-    }
-    
-    transactions = []
-    base_date = datetime.now(timezone.utc) - timedelta(days=180)
-    
-    # Generate income transactions (monthly salary + some freelance)
-    for month in range(6):
-        salary_date = base_date + timedelta(days=month*30 + random.randint(0, 5))
-        transactions.append({
-            "id": str(uuid.uuid4()),
-            "date": salary_date.isoformat(),
-            "amount": 85000 + random.randint(-5000, 5000),
-            "type": "income",
-            "mode": "bank_transfer",
-            "category": "Salary",
-            "subCategory": "Monthly Salary",
-            "merchant": "TechCorp Inc",
-            "tags": ["salary", "monthly"],
-            "taxFlags": [],
-            "narration": "Monthly salary credit",
-            "isHighValue": True
-        })
-        
-        # Some freelance income
-        if random.random() > 0.6:
-            freelance_date = base_date + timedelta(days=month*30 + random.randint(10, 25))
-            transactions.append({
-                "id": str(uuid.uuid4()),
-                "date": freelance_date.isoformat(),
-                "amount": random.randint(15000, 35000),
-                "type": "income",
-                "mode": "bank_transfer",
-                "category": "Salary",
-                "subCategory": "Freelance",
-                "merchant": "Freelance Client",
-                "tags": ["freelance", "project"],
-                "taxFlags": [],
-                "narration": "Freelance project payment",
-                "isHighValue": True
-            })
-    
-    # Generate expense transactions
-    for day in range(180):
-        current_date = base_date + timedelta(days=day)
-        
-        # 60% chance of transaction each day
-        if random.random() < 0.6:
-            num_transactions = random.randint(1, 3)
+
+    try:
+        with open(dummy_file_path, 'r') as f:
+            content = f.read().strip()
             
-            for _ in range(num_transactions):
-                # Random category (except Salary)
-                expense_categories = [c for c in categories.keys() if c != "Salary"]
-                category = random.choice(expense_categories)
-                subCategory = random.choice(categories[category])
-                merchant = random.choice(merchants[category])
-                
-                # Amount based on category
-                if category == "Rent":
-                    amount = 25000 + random.randint(-2000, 2000)
-                elif category == "Investment":
-                    amount = random.randint(5000, 20000)
-                elif category == "Healthcare":
-                    amount = random.randint(500, 5000)
-                elif category == "Shopping":
-                    amount = random.randint(500, 8000)
-                elif category == "Food & Dining":
-                    amount = random.randint(150, 2000)
-                elif category == "Education":
-                    amount = random.randint(1000, 15000)
-                else:
-                    amount = random.randint(200, 3000)
-                
-                # Tax flags
-                taxFlags = tax_mapping.get(category, [])
-                
-                # Payment mode
-                modes = ["card", "upi", "cash", "bank_transfer"]
-                mode = random.choice(modes)
-                
-                # Tags
-                tags = [category.lower().replace(" & ", "-").replace(" ", "-")]
-                if amount > 10000:
-                    tags.append("high-value")
-                if taxFlags:
-                    tags.append("tax-eligible")
-                
-                transactions.append({
-                    "id": str(uuid.uuid4()),
-                    "date": current_date.isoformat(),
-                    "amount": round(amount, 2),
-                    "type": "expense",
-                    "mode": mode,
-                    "category": category,
-                    "subCategory": subCategory,
-                    "merchant": merchant,
-                    "tags": tags,
-                    "taxFlags": taxFlags,
-                    "narration": f"Payment for {subCategory.lower()}",
-                    "isHighValue": amount > 10000
-                })
-    
-    if transactions:
-        await db.transactions.insert_many(transactions)
-        print(f"Seeded {len(transactions)} transactions")
+        # Remove variable assignment if present
+        if content.startswith("AA_api ="):
+            content = content.replace("AA_api =", "", 1).strip()
+        
+        # Parse the content
+        try:
+            raw_data = json.loads(content)
+        except json.JSONDecodeError:
+            try:
+                raw_data = ast.literal_eval(content)
+            except Exception as e:
+                print(f"Failed to parse dummy data: {e}")
+                return
+
+        transactions = []
+        
+        for item in raw_data:
+            # Transform data to match Transaction model
+            
+            # Map type
+            txn_type = "income" if item.get("type") == "CREDIT" else "expense"
+            
+            # Map mode
+            mode = item.get("mode", "").lower()
+            
+            # Map tax flags
+            tax_flags = []
+            raw_flags = item.get("taxFlags", {})
+            if isinstance(raw_flags, dict):
+                if raw_flags.get("is80C"): tax_flags.append("80C")
+                if raw_flags.get("is80D"): tax_flags.append("80D")
+                if raw_flags.get("is80G"): tax_flags.append("80G")
+                if raw_flags.get("isHRA"): tax_flags.append("HRA")
+            
+            # Map tags
+            tags = item.get("tags", [])
+            
+            # Create transaction object
+            txn = {
+                "id": item.get("txnId", str(uuid.uuid4())),
+                "date": item.get("date"),
+                "amount": float(item.get("amount", 0)),
+                "type": txn_type,
+                "mode": mode,
+                "category": item.get("category", "Uncategorized"),
+                "subCategory": item.get("subCategory", "General"),
+                "merchant": item.get("merchant", "Unknown"),
+                "tags": tags,
+                "taxFlags": tax_flags,
+                "narration": item.get("narration", ""),
+                "isHighValue": item.get("isHighValue", False)
+            }
+            transactions.append(txn)
+
+        if transactions:
+            # Clear existing data to ensure we have the exact dummy set
+            await db.transactions.delete_many({})
+            await db.transactions.insert_many(transactions)
+            print(f"Seeded {len(transactions)} transactions from dummy.txt")
+            
+    except Exception as e:
+        print(f"Error seeding transactions: {e}")
 
 @app.on_event("startup")
 async def startup_event():
