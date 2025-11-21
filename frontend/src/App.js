@@ -23,7 +23,7 @@ function App() {
   const [monthlySummary, setMonthlySummary] = useState([]);
   const [taxSummary, setTaxSummary] = useState(null);
   const [spendInsights, setSpendInsights] = useState(null);
-  
+
   // Filters
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -133,25 +133,26 @@ function App() {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6" data-testid="main-tabs">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid bg-white/80 backdrop-blur-sm p-1.5 rounded-xl shadow-sm border border-slate-200">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg px-6 py-2.5" data-testid="overview-tab">
-              <PieChartIcon className="w-4 h-4 mr-2 inline" />
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="transactions" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg px-6 py-2.5" data-testid="transactions-tab">
-              <Receipt className="w-4 h-4 mr-2 inline" />
-              Transactions
-            </TabsTrigger>
-            <TabsTrigger value="insights" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg px-6 py-2.5" data-testid="insights-tab">
-              <TrendingUp className="w-4 h-4 mr-2 inline" />
-              Spend Insights
-            </TabsTrigger>
-            <TabsTrigger value="tax" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg px-6 py-2.5" data-testid="tax-tab">
-              <FileText className="w-4 h-4 mr-2 inline" />
-              Tax Insights
-            </TabsTrigger>
-          </TabsList>
-
+          <div className="flex justify-center">
+            <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid bg-white/80 backdrop-blur-sm p-1.5 rounded-xl shadow-sm border border-slate-200">
+              <TabsTrigger value="overview" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg px-6 py-2.5" data-testid="overview-tab">
+                <PieChartIcon className="w-4 h-4 mr-2 inline" />
+                Overview
+              </TabsTrigger>
+              <TabsTrigger value="transactions" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg px-6 py-2.5" data-testid="transactions-tab">
+                <Receipt className="w-4 h-4 mr-2 inline" />
+                Transactions
+              </TabsTrigger>
+              <TabsTrigger value="insights" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg px-6 py-2.5" data-testid="insights-tab">
+                <TrendingUp className="w-4 h-4 mr-2 inline" />
+                Spend Insights
+              </TabsTrigger>
+              <TabsTrigger value="tax" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg px-6 py-2.5" data-testid="tax-tab">
+                <FileText className="w-4 h-4 mr-2 inline" />
+                Tax Insights
+              </TabsTrigger>
+            </TabsList>
+          </div>
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6" data-testid="overview-content">
             {summary && (
@@ -215,7 +216,7 @@ function App() {
                   <CardDescription>Breakdown of expenses by category</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
+                  <ResponsiveContainer width="100%" height={370}>
                     <PieChart>
                       <Pie
                         data={categorySummary}
@@ -230,6 +231,14 @@ function App() {
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
+                      <div className="mt-3">
+                        {/* ⭐ Legend added here */}
+                        <Legend
+                          layout="horizontal"
+                          verticalAlign="bottom"
+                          align="center"
+                        />
+                      </div>
                       <Tooltip formatter={(value) => formatCurrency(value)} />
                     </PieChart>
                   </ResponsiveContainer>
@@ -242,7 +251,7 @@ function App() {
                   <CardDescription>Compare your monthly cash flow</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
+                  <ResponsiveContainer width="100%" height={370}>
                     <BarChart data={monthlySummary}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                       <XAxis dataKey="month" stroke="#64748b" />
