@@ -24,3 +24,31 @@ numpy>=1.26.0
 python-multipart>=0.0.9
 jq>=1.6.0
 typer>=0.9.0
+
+# CrewAI framework
+crewai
+crewai-tools
+
+# Google Gemini LLM support
+google-generativeai
+langchain-google-genai
+
+# General AI + LLM integration
+langchain
+langchain-community
+
+# Environment variable loader
+python-dotenv
+
+# HTTP Requests
+requests
+
+# Data models for JSON output
+pydantic
+
+# For Serper search tool
+serper
+
+# Optional but recommended for stability
+tqdm
+
