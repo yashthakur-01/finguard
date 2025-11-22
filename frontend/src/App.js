@@ -8,7 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { ArrowUpCircle, ArrowDownCircle, Wallet, AlertTriangle, TrendingUp, Calendar, Filter, Search, DollarSign, Receipt, PieChart as PieChartIcon, FileText } from "lucide-react";
+import { ArrowUpCircle, ArrowDownCircle, Wallet, AlertTriangle, TrendingUp, Calendar, Filter, Search, DollarSign, Receipt, PieChart as PieChartIcon, FileText, Bot } from "lucide-react";
+import FinancialAgent from "./components/FinancialAgent";
+import { Button } from "@/components/ui/button";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -120,16 +122,31 @@ function App() {
 
   const categories = [...new Set(transactions.map((t) => t.category))];
 
+  const [currentPage, setCurrentPage] = useState('dashboard');
+
+  if (currentPage === 'agent') {
+    return <FinancialAgent onBack={() => setCurrentPage('dashboard')} />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="mb-8">
-          <h1 className="text-5xl font-bold text-slate-900 mb-2" style={{ fontFamily: 'Manrope, sans-serif' }}>
-            Financial Dashboard
-          </h1>
-          <p className="text-lg text-slate-600" style={{ fontFamily: 'Inter, sans-serif' }}>
-            Track your income, expenses, and financial insights
-          </p>
+        <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+          <div>
+            <h1 className="text-5xl font-bold text-slate-900 mb-2" style={{ fontFamily: 'Manrope, sans-serif' }}>
+              Financial Dashboard
+            </h1>
+            <p className="text-lg text-slate-600" style={{ fontFamily: 'Inter, sans-serif' }}>
+              Track your income, expenses, and financial insights
+            </p>
+          </div>
+          <Button
+            onClick={() => setCurrentPage('agent')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center gap-2 text-lg"
+          >
+            <Bot className="w-6 h-6" />
+            Ask Financial Agent
+          </Button>
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6" data-testid="main-tabs">
@@ -146,13 +163,13 @@ function App() {
               <TabsTrigger value="insights" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg px-6 py-2.5" data-testid="insights-tab">
                 <TrendingUp className="w-4 h-4 mr-2 inline" />
                 Spend Insights
-              </TabsTrigger>
+              </TabsTrigger >
               <TabsTrigger value="tax" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg px-6 py-2.5" data-testid="tax-tab">
                 <FileText className="w-4 h-4 mr-2 inline" />
                 Tax Insights
               </TabsTrigger>
-            </TabsList>
-          </div>
+            </TabsList >
+          </div >
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6" data-testid="overview-content">
             {summary && (
@@ -207,7 +224,8 @@ function App() {
                   </CardContent>
                 </Card>
               </div>
-            )}
+            )
+            }
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card className="shadow-lg border-slate-200 bg-white/70 backdrop-blur-sm" data-testid="category-chart-card">
@@ -265,10 +283,10 @@ function App() {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
+          </TabsContent >
 
           {/* Transactions Tab */}
-          <TabsContent value="transactions" className="space-y-6" data-testid="transactions-content">
+          <TabsContent value="transactions" className="space-y-6" data-testid="transactions-content" >
             <Card className="shadow-lg border-slate-200 bg-white/70 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-xl font-semibold text-slate-800" style={{ fontFamily: 'Manrope, sans-serif' }}>
@@ -403,10 +421,10 @@ function App() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          </TabsContent >
 
           {/* Spend Insights Tab */}
-          <TabsContent value="insights" className="space-y-6" data-testid="insights-content">
+          <TabsContent value="insights" className="space-y-6" data-testid="insights-content" >
             {spendInsights && (
               <>
                 <Card className="shadow-lg border-slate-200 bg-white/70 backdrop-blur-sm" data-testid="daily-trend-card">
@@ -510,10 +528,10 @@ function App() {
                 </div>
               </>
             )}
-          </TabsContent>
+          </TabsContent >
 
           {/* Tax Insights Tab */}
-          <TabsContent value="tax" className="space-y-6" data-testid="tax-content">
+          <TabsContent value="tax" className="space-y-6" data-testid="tax-content" >
             {taxSummary && (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
@@ -609,11 +627,12 @@ function App() {
                   </CardContent>
                 </Card>
               </>
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
-    </div>
+            )
+            }
+          </TabsContent >
+        </Tabs >
+      </div >
+    </div >
   );
 }
 

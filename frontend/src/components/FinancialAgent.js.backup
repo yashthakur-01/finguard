@@ -1,0 +1,192 @@
+import React, { useState } from 'react';
+import axios from 'axios';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Loader2, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, XCircle, DollarSign, Activity } from "lucide-react";
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
+const API = `${BACKEND_URL}/api`;
+
+const FinancialAgent = ({ onBack }) => {
+    const [companyName, setCompanyName] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [result, setResult] = useState(null);
+    const [error, setError] = useState(null);
+
+    const handleAnalyze = async () => {
+        if (!companyName.trim()) return;
+
+        setLoading(true);
+        setError(null);
+        setResult(null);
+
+        try {
+            const response = await axios.post(`${API}/financial-analysis`, {
+                company_name: companyName
+            });
+
+            if (response.data.error) {
+                setError(response.data.error);
+            } else {
+                setResult(response.data);
+            }
+        } catch (err) {
+            setError(err.response?.data?.detail || err.message || "An error occurred");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getDecisionColor = (decision) => {
+        switch (decision?.toLowerCase()) {
+            case 'strong_buy': return 'bg-green-600 hover:bg-green-700';
+            case 'buy': return 'bg-emerald-500 hover:bg-emerald-600';
+            case 'hold': return 'bg-yellow-500 hover:bg-yellow-600';
+            case 'sell': return 'bg-orange-500 hover:bg-orange-600';
+            case 'avoid': return 'bg-red-600 hover:bg-red-700';
+            default: return 'bg-slate-500';
+        }
+    };
+
+    const getRiskColor = (risk) => {
+        switch (risk?.toLowerCase()) {
+            case 'low': return 'text-green-600 bg-green-50 border-green-200';
+            case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+            case 'high': return 'text-red-600 bg-red-50 border-red-200';
+            default: return 'text-slate-600 bg-slate-50 border-slate-200';
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 p-6">
+            <div className="max-w-5xl mx-auto space-y-8">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <Button variant="ghost" onClick={onBack} className="p-2 hover:bg-slate-200 rounded-full">
+                            <ArrowLeft className="w-6 h-6 text-slate-700" />
+                        </Button>
+                        <div>
+                            <h1 className="text-4xl font-bold text-slate-900 flex items-center gap-2" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                                <Activity className="w-10 h-10 text-blue-600" />
+                                FINGUARD
+                            </h1>
+                            <p className="text-slate-600 ml-12">AI-Powered Financial Analysis Agent</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Input Section */}
+                <Card className="shadow-xl border-slate-200 bg-white/80 backdrop-blur-sm">
+                    <CardHeader>
+                        <CardTitle>Analyze a Company</CardTitle>
+                        <CardDescription>Enter a company name to get a comprehensive AI financial opinion.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex gap-4">
+                            <Input
+                                placeholder="Enter company name (e.g., Apple, Tesla, Reliance)"
+                                value={companyName}
+                                onChange={(e) => setCompanyName(e.target.value)}
+                                className="text-lg p-6"
+                                onKeyDown={(e) => e.key === 'Enter' && handleAnalyze()}
+                            />
+                            <Button
+                                onClick={handleAnalyze}
+                                disabled={loading || !companyName}
+                                className="px-8 py-6 text-lg bg-blue-600 hover:bg-blue-700 transition-all"
+                            >
+                                {loading ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : <TrendingUp className="w-6 h-6 mr-2" />}
+                                {loading ? 'Analyzing...' : 'Analyze'}
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Error Display */}
+                {error && (
+                    <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>Error</AlertTitle>
+                        <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                )}
+
+                {/* Results Display */}
+                {result && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        {/* Top Summary Card */}
+                        <Card className="shadow-xl border-slate-200 overflow-hidden">
+                            <div className={`h-2 ${getDecisionColor(result.decision)}`} />
+                            <CardHeader className="pb-4">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <CardTitle className="text-3xl font-bold text-slate-900">{result.company}</CardTitle>
+                                        <CardDescription className="text-lg mt-1 flex items-center gap-2">
+                                            Ticker: <Badge variant="outline" className="text-base font-mono">{result.ticker}</Badge>
+                                        </CardDescription>
+                                    </div>
+                                    <Badge className={`text-lg px-4 py-1 ${getDecisionColor(result.decision)} text-white border-none capitalize`}>
+                                        {result.decision.replace('_', ' ')}
+                                    </Badge>
+                                    <Activity className="w-5 h-5 text-blue-600" />
+                                    Current Financial Condition
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-slate-700 leading-relaxed text-lg">
+                                    {result.current_financial_condition}
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        {/* Reasons & Metrics */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <Card className="shadow-lg border-slate-200">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-green-700">
+                                        <CheckCircle className="w-5 h-5" />
+                                        Key Reasons
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <ul className="space-y-3">
+                                        {result.reasons.map((reason, index) => (
+                                            <li key={index} className="flex items-start gap-3 text-slate-700">
+                                                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
+                                                {reason}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="shadow-lg border-slate-200">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-blue-700">
+                                        <TrendingUp className="w-5 h-5" />
+                                        Key Metrics Considered
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="flex flex-wrap gap-2">
+                                        {result.key_metrics_considered.map((metric, index) => (
+                                            <Badge key={index} variant="secondary" className="px-3 py-1 text-sm bg-blue-50 text-blue-700 hover:bg-blue-100">
+                                                {metric}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default FinancialAgent;
