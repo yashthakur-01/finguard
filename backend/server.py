@@ -12,6 +12,8 @@ from datetime import datetime, timezone, timedelta
 import random
 import json
 import ast
+from financial_agent.main import run_analysis
+from financial_agent.utils import get_ticker
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -304,6 +306,29 @@ async def get_spend_insights():
         "topMerchants": top_merchants,
         "highSpendAlerts": high_spend_days
     }
+
+class AnalysisRequest(BaseModel):
+    company_name: str
+
+@api_router.post("/financial-analysis")
+async def financial_analysis(request: AnalysisRequest):
+    try:
+        # Get ticker
+        ticker = get_ticker(request.company_name)
+        if not ticker:
+             return {"error": "Could not find ticker symbol"}
+        
+        # Run analysis
+        import asyncio
+        from functools import partial
+        
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, partial(run_analysis, ticker, request.company_name))
+        
+        return result
+    except Exception as e:
+        logger.error(f"Error in financial analysis: {e}")
+        return {"error": str(e)}
 
 # Include the router in the main app
 app.include_router(api_router)

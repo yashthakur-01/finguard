@@ -2,7 +2,7 @@
 import requests
 from pydantic import BaseModel
 from crewai.tools import BaseTool
-from config import FMP_API_KEY
+from ..config import FMP_API_KEY
 
 
 class LatestPriceInput(BaseModel):
@@ -10,10 +10,10 @@ class LatestPriceInput(BaseModel):
 
 
 class LatestPriceTool(BaseTool):
-    name = "latest_price_tool"
-    description = "Fetches the latest real-time stock price using FMP quote API."
+    name: str = "latest_price_tool"
+    description: str = "Fetches the latest real-time stock price using FMP quote API."
 
-    args_schema = LatestPriceInput
+    args_schema: type[BaseModel] = LatestPriceInput
 
     def _run(self, ticker: str):
         ticker = ticker.upper().strip()

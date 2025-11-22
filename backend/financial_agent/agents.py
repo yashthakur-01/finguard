@@ -1,15 +1,17 @@
 # agents.py
 from crewai import Agent
 from langchain_google_genai import ChatGoogleGenerativeAI
+from .config import GOOGLE_API_KEY
+from .tools.market_data_tool import MarketDataTool
+from .tools.news_search_tool import CompanyNewsTool
+from .tools.latest_price_tool import LatestPriceTool
+from crewai import LLM
 
-from tools.market_data_tool import MarketDataTool
-from tools.news_search_tool import CompanyNewsTool
-from tools.latest_price_tool import LatestPriceTool
 
-
-llm_gemini = ChatGoogleGenerativeAI(
-    model="gemini-1.5-pro",     # BETTER RESULTS
-    temperature=0.15,
+llm = LLM(
+    model="gemini/gemini-1.5-flash",   # ← THIS ensures AI Studio, NOT Vertex
+    api_key=GOOGLE_API_KEY,
+    temperature=0.2
 )
 
 data_agent = Agent(
@@ -22,7 +24,7 @@ data_agent = Agent(
         "You are a senior financial researcher with deep expertise in deciphering "
         "financial statements, valuation ratios, and business trends."
     ),
-    llm=llm_gemini,
+    llm=llm,
     verbose=True,
     tools=[MarketDataTool(), LatestPriceTool(), CompanyNewsTool()],
     instructions="""
@@ -76,7 +78,7 @@ analyst_agent = Agent(
         "You are a 20-year experienced Wall Street analyst specializing in equity valuation, "
         "risk assessment, and company fundamentals."
     ),
-    llm=llm_gemini,
+    llm=llm,
     verbose=True,
     instructions="""
 You will receive a detailed research summary for a company.

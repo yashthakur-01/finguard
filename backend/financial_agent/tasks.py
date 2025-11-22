@@ -1,7 +1,7 @@
 # tasks.py
 from crewai import Task
-from agents import data_agent, analyst_agent
-from schemas import StockDecision
+from .agents import data_agent, analyst_agent
+from .schemas import StockDecision
 
 
 data_collection_task = Task(

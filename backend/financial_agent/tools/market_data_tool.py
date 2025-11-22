@@ -2,7 +2,7 @@
 import requests
 from pydantic import BaseModel
 from crewai.tools import BaseTool
-from config import FMP_API_KEY
+from ..config import FMP_API_KEY
 
 
 class MarketDataInput(BaseModel):
@@ -10,10 +10,10 @@ class MarketDataInput(BaseModel):
 
 
 class MarketDataTool(BaseTool):
-    name = "market_data_tool"
-    description = "Fetches fundamentals, ratios, financials, balance sheet, cash flow."
+    name: str = "market_data_tool"
+    description: str = "Fetches fundamentals, ratios, financials, balance sheet, cash flow."
 
-    args_schema = MarketDataInput
+    args_schema: type[BaseModel] = MarketDataInput
 
     def _run(self, ticker: str):
         t = ticker.upper()

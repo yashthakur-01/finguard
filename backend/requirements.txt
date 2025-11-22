@@ -47,7 +47,7 @@ requests
 pydantic
 
 # For Serper search tool
-serper
+
 
 # Optional but recommended for stability
 tqdm
