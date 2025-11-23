@@ -2,31 +2,30 @@
 import requests
 import json
 import urllib.parse
+import yfinance as yf
 from .config import FMP_API_KEY, SERPER_API_KEY
 
 
 def get_market_data(ticker: str) -> dict:
-    """Fetch market data for a stock ticker using the Financial Modeling Prep API.
-    Returns a dict with profile, ratios, income, balance, and cashflow data.
+    """Fetch market data for a stock ticker using yfinance.
+    Returns a dict with key financial metrics.
     """
     t = ticker.upper().strip()
-    encoded_t = urllib.parse.quote(t)
-    
-    def api(path: str) -> str:
-        return f"https://financialmodelingprep.com/api/v3/{path}/{encoded_t}?apikey={FMP_API_KEY}"
     try:
-        profile = requests.get(api("profile")).json()
-        ratios = requests.get(api("ratios")).json()
-        income = requests.get(api("income-statement?limit=4")).json()
-        balance = requests.get(api("balance-sheet-statement?limit=4")).json()
-        cashflow = requests.get(api("cash-flow-statement?limit=4")).json()
+        ticker_obj = yf.Ticker(t)
+        info = ticker_obj.info
+        
+        # Map yfinance info to a standardized format
         return {
             "ticker": t,
-            "profile": profile,
-            "ratios": ratios,
-            "income": income,
-            "balance": balance,
-            "cashflow": cashflow,
+            "pe_ratio": info.get('trailingPE') or info.get('forwardPE'),
+            "roe": info.get('returnOnEquity'),
+            "profit_margin": info.get('profitMargins'),
+            "debt_to_equity": info.get('debtToEquity'),
+            "sector": info.get('sector'),
+            "description": info.get('longBusinessSummary'),
+            "market_cap": info.get('marketCap'),
+            "currency": info.get('currency')
         }
     except Exception as e:
         return {"error": str(e), "ticker": t}
@@ -75,5 +74,24 @@ def get_company_news(company: str) -> dict:
         response = requests.post(url, headers=headers, data=payload, timeout=10)
         result = response.json()
         return {"company": company, "news_results": result}
+    except Exception as e:
+        return {"error": str(e), "company": company}
+
+
+def get_sustainability_data(company: str) -> dict:
+    """Fetch sustainability and ESG data for a company using Serper.dev.
+    Returns a dict with the raw API response under the key "sustainability_results".
+    """
+    try:
+        url = "https://google.serper.dev/search"
+        query = f"{company} ESG score sustainability report carbon footprint environment impact"
+        payload = json.dumps({"q": query})
+        headers = {
+            "X-API-KEY": SERPER_API_KEY,
+            "Content-Type": "application/json",
+        }
+        response = requests.post(url, headers=headers, data=payload, timeout=10)
+        result = response.json()
+        return {"company": company, "sustainability_results": result}
     except Exception as e:
         return {"error": str(e), "company": company}

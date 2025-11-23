@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, DollarSign, Activity, HelpCircle } from "lucide-react";
+import { Loader2, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, DollarSign, Activity, HelpCircle, Leaf } from "lucide-react";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
 const API = `${BACKEND_URL}/api`;
@@ -68,6 +68,14 @@ const FinancialAgent = ({ onBack }) => {
             case 'JPY': return '¥';
             default: return '$';
         }
+    };
+
+    const getGreenScoreColor = (score) => {
+        const s = parseInt(score);
+        if (isNaN(s)) return 'text-slate-600 bg-slate-50 border-slate-200';
+        if (s >= 7) return 'text-emerald-700 bg-emerald-50 border-emerald-200';
+        if (s >= 4) return 'text-yellow-700 bg-yellow-50 border-yellow-200';
+        return 'text-red-700 bg-red-50 border-red-200';
     };
 
     return (
@@ -153,7 +161,7 @@ const FinancialAgent = ({ onBack }) => {
                                         {result.decision?.replace('_', ' ')}
                                     </Badge>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4 mt-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                                     <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
                                         <div className="flex items-center gap-2 mb-1">
                                             <p className="text-sm text-slate-500">Time Horizon</p>
@@ -168,6 +176,15 @@ const FinancialAgent = ({ onBack }) => {
                                         </div>
                                         <Badge variant="outline" className={`text-lg font-semibold px-3 py-1 ${getRiskColor(result.risk_level)}`}>
                                             {result.risk_level}
+                                        </Badge>
+                                    </div>
+                                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <p className="text-sm text-slate-500">Green Score</p>
+                                            <Leaf className="w-4 h-4 text-emerald-500 cursor-help" title={result.green_summary || "Eco-friendliness score based on ESG data"} />
+                                        </div>
+                                        <Badge variant="outline" className={`text-lg font-semibold px-3 py-1 ${getGreenScoreColor(result.green_score)}`}>
+                                            {result.green_score || 'N/A'}/10
                                         </Badge>
                                     </div>
                                 </div>

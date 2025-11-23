@@ -2,7 +2,7 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import ChatPromptTemplate
 from .config import GOOGLE_API_KEY
-from .pure_tools import get_market_data, get_latest_price, get_company_news
+from .pure_tools import get_market_data, get_latest_price, get_company_news, get_sustainability_data
 import json
 
 # Initialize LLM - using flash model for lower token usage
@@ -19,40 +19,29 @@ def run_analysis(ticker: str, company_name: str) -> dict:
         market_data = get_market_data(ticker)
         price_data = get_latest_price(ticker)
         news_data = get_company_news(company_name)
+        sustainability_data = get_sustainability_data(company_name)
         
         # Extract only essential data to reduce tokens
         price = price_data.get("price", "N/A")
         currency = price_data.get("currency", "USD")
         
-        # Safely extract market data (handle different structures)
-        profile_data = market_data.get("profile", [])
-        if isinstance(profile_data, list) and len(profile_data) > 0:
-            profile = profile_data[0]
-        elif isinstance(profile_data, dict):
-            profile = profile_data
-        else:
-            profile = {}
-        
-        ratios_data = market_data.get("ratios", [])
-        if isinstance(ratios_data, list) and len(ratios_data) > 0:
-            ratios = ratios_data[0]
-        elif isinstance(ratios_data, dict):
-            ratios = ratios_data
-        else:
-            ratios = {}
-        
+        # Extract essential data directly from the new yfinance-based structure
         essential_data = {
-            "company": profile.get("companyName", company_name),
-            "sector": profile.get("sector", "N/A"),
-            "price": price,
-            "pe_ratio": ratios.get("priceEarningsRatio", "N/A"),
-            "debt_to_equity": ratios.get("debtEquityRatio", "N/A"),
-            "roe": ratios.get("returnOnEquity", "N/A"),
-            "profit_margin": ratios.get("netProfitMargin", "N/A")
+            "pe_ratio": market_data.get("pe_ratio"),
+            "roe": market_data.get("roe"),
+            "profit_margin": market_data.get("profit_margin"),
+            "debt_to_equity": market_data.get("debt_to_equity"),
+            "sector": market_data.get("sector"),
+            "description": market_data.get("description"),
         }
         
         # Get only first 3 news items
         news_items = news_data.get("news_results", {}).get("news", [])[:3] if isinstance(news_data.get("news_results"), dict) else []
+        
+        # Get sustainability snippets
+        sust_organic = sustainability_data.get("sustainability_results", {}).get("organic", [])[:3] if isinstance(sustainability_data.get("sustainability_results"), dict) else []
+        sust_snippets = [item.get("snippet", "") for item in sust_organic]
+        sust_text = "; ".join(sust_snippets)
         
         # Step 2: Create concise analysis prompt
         prompt = ChatPromptTemplate.from_messages([
@@ -64,14 +53,17 @@ def run_analysis(ticker: str, company_name: str) -> dict:
   "time_horizon": "SHORT_TERM|MEDIUM_TERM|LONG_TERM",
   "current_financial_condition": "brief summary",
   "reasons": ["reason1", "reason2", "reason3"],
-  "key_metrics_considered": ["metric1", "metric2"]
+  "key_metrics_considered": ["metric1", "metric2"],
+  "green_score": "1-10 score based on eco-friendliness",
+  "green_summary": "brief explanation of the green score"
 }}"""),
             ("human", """Analyze {company} ({ticker}):
 Price: ${price}
-PE: {pe}, ROE: {roe}%, Margin: {margin}%
+PE: {pe}, ROE: {roe}, Margin: {margin}
 Debt/Equity: {debt}
 Sector: {sector}
 Recent news: {news}
+Sustainability Info: {sustainability}
 
 Provide JSON analysis:""")
         ])
@@ -87,7 +79,8 @@ Provide JSON analysis:""")
             "margin": essential_data.get("profit_margin", "N/A"),
             "debt": essential_data.get("debt_to_equity", "N/A"),
             "sector": essential_data.get("sector", "N/A"),
-            "news": str(news_items[:2]) if news_items else "No recent news"
+            "news": str(news_items[:2]) if news_items else "No recent news",
+            "sustainability": sust_text if sust_text else "No specific sustainability data found"
         })
         
         # Step 4: Parse output
